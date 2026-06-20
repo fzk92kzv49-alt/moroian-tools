@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Moroian Reports — Template Studio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -865,36 +866,11 @@
 
   <div id="videoModePanel" style="display:none">
     <div class="field">
-      <label>Video source</label>
-      <div class="photo-mode-row">
-        <button class="video-source-btn active" data-source="upload">Upload File</button>
-        <button class="video-source-btn" data-source="camera">Record with Camera</button>
-      </div>
-    </div>
-
-    <div class="field" id="upload-source-field">
       <label>Upload your video (talking-head clip)</label>
       <label class="upload-box" id="upload-videoFile">
-        Click to upload video
+        Tap to upload video
         <input type="file" accept="video/*" id="file-videoFile">
       </label>
-      <div style="font-size:10px; color:var(--grey); margin-top:6px; line-height:1.4;">
-        Note: uploaded files get decoded and redrawn once, which can soften quality slightly. For best quality, use Record with Camera instead — it skips that extra step.
-      </div>
-    </div>
-
-    <div class="field" id="camera-source-field" style="display:none">
-      <button class="download-btn" id="startCameraBtn" style="background:#2a2a2a;">🎥 Start Camera</button>
-      <div id="cameraPreviewBox" style="display:none; margin-top:10px;">
-        <video id="liveCameraPreview" autoplay playsinline muted style="width:100%; border:1px solid var(--line); background:#000;"></video>
-        <div style="display:flex; gap:6px; margin-top:8px;">
-          <button class="download-btn" id="startRecordCameraBtn" style="flex:1; padding:10px;">⏺ Start Recording</button>
-          <button class="download-btn" id="stopRecordCameraBtn" style="flex:1; padding:10px; background:#333; display:none;">⏹ Stop</button>
-        </div>
-      </div>
-      <div style="font-size:10px; color:var(--grey); margin-top:6px; line-height:1.4;">
-        Records directly at your camera's native quality with the overlay burned in live — no upload/redraw step, so quality stays closest to the source.
-      </div>
     </div>
 
     <div class="field">
@@ -1360,113 +1336,6 @@ const videoCanvas = document.getElementById('videoCanvas');
 const vctx = videoCanvas.getContext('2d');
 let drawLoopActive = false;
 
-// Video source toggle (Upload File vs Record with Camera)
-document.querySelectorAll('.video-source-btn').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    document.querySelectorAll('.video-source-btn').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-    const source = btn.dataset.source;
-    document.getElementById('upload-source-field').style.display = source === 'upload' ? 'block' : 'none';
-    document.getElementById('camera-source-field').style.display = source === 'camera' ? 'block' : 'none';
-  });
-});
-
-/* ============================================================
-   LIVE CAMERA RECORDING — records directly from the camera
-   stream through the overlay pipeline, skipping the upload/
-   decode/redraw round-trip that softens quality on uploaded files.
-   ============================================================ */
-let cameraStream = null;
-let cameraMediaRecorder = null;
-let cameraChunks = [];
-
-document.getElementById('startCameraBtn').addEventListener('click', async ()=>{
-  try{
-    cameraStream = await navigator.mediaDevices.getUserMedia({
-      video: { width: { ideal: 1080 }, height: { ideal: 1920 }, facingMode: 'user' },
-      audio: true
-    });
-    const liveVideo = document.getElementById('liveCameraPreview');
-    liveVideo.srcObject = cameraStream;
-    document.getElementById('cameraPreviewBox').style.display = 'block';
-    document.getElementById('startCameraBtn').textContent = '🎥 Camera Active';
-    document.getElementById('startCameraBtn').disabled = true;
-  } catch(err){
-    document.getElementById('recordStatus').textContent =
-      '⚠️ Could not access camera: ' + err.message + '. Check your browser allows camera access for this page.';
-  }
-});
-
-document.getElementById('startRecordCameraBtn').addEventListener('click', ()=>{
-  if(!cameraStream){ return; }
-
-  // Draw the live camera feed + overlay onto the same canvas used everywhere else,
-  // so the exported video matches your template styling exactly.
-  const liveVideo = document.getElementById('liveCameraPreview');
-  vState.videoLoaded = true; // lets drawOverlay's logic run normally
-
-  let cameraDrawLoopActive = true;
-  function drawCameraFrame(){
-    if(!cameraDrawLoopActive) return;
-    const W = videoCanvas.width, H = videoCanvas.height;
-    vctx.imageSmoothingEnabled = true;
-    vctx.imageSmoothingQuality = 'high';
-    vctx.fillStyle = '#000';
-    vctx.fillRect(0,0,W,H);
-    if(liveVideo.videoWidth){
-      const vw = liveVideo.videoWidth, vh = liveVideo.videoHeight;
-      const canvasRatio = W/H, videoRatio = vw/vh;
-      let drawW, drawH, dx, dy;
-      if(videoRatio > canvasRatio){ drawH = H; drawW = H * videoRatio; dx = (W-drawW)/2; dy = 0; }
-      else { drawW = W; drawH = W / videoRatio; dx = 0; dy = (H-drawH)/2; }
-      vctx.drawImage(liveVideo, dx, dy, drawW, drawH);
-    }
-    drawOverlay(vctx, W, H);
-    requestAnimationFrame(drawCameraFrame);
-  }
-  drawCameraFrame();
-
-  // Capture the canvas (video + overlay) and attach the real microphone audio directly —
-  // no Web Audio re-routing needed since this is a live stream, not a pre-recorded element.
-  const canvasStream = videoCanvas.captureStream(30);
-  cameraStream.getAudioTracks().forEach(track => canvasStream.addTrack(track));
-
-  let mimeType = 'video/webm;codecs=vp9,opus';
-  if(!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/webm;codecs=vp8,opus';
-  if(!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/webm';
-
-  cameraChunks = [];
-  cameraMediaRecorder = new MediaRecorder(canvasStream, {
-    mimeType,
-    videoBitsPerSecond: 8000000,
-    audioBitsPerSecond: 192000
-  });
-  cameraMediaRecorder.ondataavailable = (e)=>{ if(e.data.size > 0) cameraChunks.push(e.data); };
-  cameraMediaRecorder.onstop = ()=>{
-    cameraDrawLoopActive = false;
-    const blob = new Blob(cameraChunks, { type: 'video/webm' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'moroian-camera-' + Date.now() + '.webm';
-    link.click();
-    document.getElementById('recordStatus').textContent = 'Recording saved — file downloaded.';
-  };
-
-  cameraMediaRecorder.start(250);
-  document.getElementById('startRecordCameraBtn').style.display = 'none';
-  document.getElementById('stopRecordCameraBtn').style.display = 'block';
-  document.getElementById('recordStatus').textContent = 'Recording from camera — click Stop when finished.';
-});
-
-document.getElementById('stopRecordCameraBtn').addEventListener('click', ()=>{
-  if(cameraMediaRecorder && cameraMediaRecorder.state === 'recording'){
-    cameraMediaRecorder.stop();
-  }
-  document.getElementById('startRecordCameraBtn').style.display = 'block';
-  document.getElementById('stopRecordCameraBtn').style.display = 'none';
-});
-
 // Video file upload
 document.getElementById('file-videoFile').addEventListener('change', (e)=>{
   console.log('[Moroian] file input change event fired, files:', e.target.files);
@@ -1826,14 +1695,34 @@ let mediaRecorder, recordedChunks = [];
 document.getElementById('recordBtn').addEventListener('click', ()=>{
   if(!vState.videoLoaded){ alert('Upload a video first.'); return; }
 
+  // Feature detection up front — on some mobile browsers (notably older iOS Safari),
+  // captureStream/MediaRecorder may not exist at all. Without this check, calling
+  // them directly throws immediately and silently kills the whole click handler,
+  // which looks exactly like "nothing happens" with zero feedback.
+  if(typeof MediaRecorder === 'undefined'){
+    document.getElementById('recordStatus').textContent =
+      '⚠️ This browser doesn\'t support video recording/export (MediaRecorder API missing). Try the latest Chrome or Safari, or export from a desktop browser instead.';
+    return;
+  }
+  if(!videoCanvas.captureStream){
+    document.getElementById('recordStatus').textContent =
+      '⚠️ This browser doesn\'t support canvas video capture. Try the latest Chrome or Safari, or export from a desktop browser instead.';
+    return;
+  }
+
   recordedChunks = [];
   sourceVideo.currentTime = 0;
 
-  // Capture canvas video stream
-  const canvasStream = videoCanvas.captureStream(30);
+  let canvasStream;
+  try{
+    canvasStream = videoCanvas.captureStream(30);
+  } catch(err){
+    document.getElementById('recordStatus').textContent =
+      '⚠️ Could not start video capture: ' + err.message;
+    return;
+  }
 
   // Attach original audio track from the source video
-  let combinedStream = canvasStream;
   try{
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const sourceNode = audioCtx.createMediaElementSource(sourceVideo);
@@ -1846,18 +1735,35 @@ document.getElementById('recordBtn').addEventListener('click', ()=>{
   }
 
   let mimeType = 'video/webm;codecs=vp9,opus';
-  if(!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/webm;codecs=vp8,opus';
-  if(!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/webm';
+  try{
+    if(!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/webm;codecs=vp8,opus';
+    if(!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/webm';
+    if(!MediaRecorder.isTypeSupported(mimeType)){
+      document.getElementById('recordStatus').textContent =
+        '⚠️ This browser doesn\'t support any compatible video format for export. Try the latest Chrome, or export from a desktop browser instead.';
+      return;
+    }
+  } catch(err){
+    document.getElementById('recordStatus').textContent =
+      '⚠️ Could not check video format support: ' + err.message;
+    return;
+  }
 
   // Explicit high bitrate — without this, browsers default to a conservative bitrate
   // tuned for general screen-recording, which compresses fine detail (skin, hair,
   // background texture) heavily and is the main cause of grainy/blocky exports.
   // 8 Mbps is well above what 1080x1920 talking-head footage actually needs to stay clean.
-  mediaRecorder = new MediaRecorder(canvasStream, {
-    mimeType,
-    videoBitsPerSecond: 8000000,
-    audioBitsPerSecond: 192000
-  });
+  try{
+    mediaRecorder = new MediaRecorder(canvasStream, {
+      mimeType,
+      videoBitsPerSecond: 8000000,
+      audioBitsPerSecond: 192000
+    });
+  } catch(err){
+    document.getElementById('recordStatus').textContent =
+      '⚠️ Could not start recorder: ' + err.message + '. Try exporting from a desktop browser instead.';
+    return;
+  }
   mediaRecorder.ondataavailable = (e)=>{ if(e.data.size > 0) recordedChunks.push(e.data); };
   mediaRecorder.onstop = ()=>{
     const blob = new Blob(recordedChunks, { type: 'video/webm' });
