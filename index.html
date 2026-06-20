@@ -1734,11 +1734,20 @@ document.getElementById('recordBtn').addEventListener('click', ()=>{
     console.warn('Audio capture not available, recording video only:', err);
   }
 
-  let mimeType = 'video/webm;codecs=vp9,opus';
+  // Try formats in order: webm (Chrome/Firefox/Android) first, then mp4/H.264
+  // variants (Safari's only supported export format — it has no webm support at all).
+  const candidateMimeTypes = [
+    'video/webm;codecs=vp9,opus',
+    'video/webm;codecs=vp8,opus',
+    'video/webm',
+    'video/mp4;codecs=avc1,mp4a',
+    'video/mp4;codecs=avc1',
+    'video/mp4'
+  ];
+  let mimeType = null;
   try{
-    if(!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/webm;codecs=vp8,opus';
-    if(!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/webm';
-    if(!MediaRecorder.isTypeSupported(mimeType)){
+    mimeType = candidateMimeTypes.find(t => MediaRecorder.isTypeSupported(t));
+    if(!mimeType){
       document.getElementById('recordStatus').textContent =
         '⚠️ This browser doesn\'t support any compatible video format for export. Try the latest Chrome, or export from a desktop browser instead.';
       return;
@@ -1766,11 +1775,17 @@ document.getElementById('recordBtn').addEventListener('click', ()=>{
   }
   mediaRecorder.ondataavailable = (e)=>{ if(e.data.size > 0) recordedChunks.push(e.data); };
   mediaRecorder.onstop = ()=>{
-    const blob = new Blob(recordedChunks, { type: 'video/webm' });
+    // Use the actual mimeType that was negotiated (webm or mp4) so the file
+    // extension matches what's really inside it — mislabeling an mp4 as .webm
+    // (or vice versa) can stop it from opening correctly.
+    const isMp4 = mimeType.includes('mp4');
+    const fileExt = isMp4 ? 'mp4' : 'webm';
+    const blobType = isMp4 ? 'video/mp4' : 'video/webm';
+    const blob = new Blob(recordedChunks, { type: blobType });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'moroian-video-' + Date.now() + '.webm';
+    link.download = 'moroian-video-' + Date.now() + '.' + fileExt;
     link.click();
     document.getElementById('recordStatus').textContent = 'Export complete — file downloaded.';
   };
