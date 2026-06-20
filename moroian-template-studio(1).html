@@ -1,0 +1,1903 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Moroian Reports — Template Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0A0A0A;
+    --bg-panel: #141414;
+    --red: #E10600;
+    --red-dim: #7a0500;
+    --off-white: #F2F0EA;
+    --grey: #8a8a86;
+    --gold: #C9A961;
+    --line: #2a2a2a;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:#1b1b1b;
+    color:var(--off-white);
+    font-family:'Inter','Helvetica Neue',Arial,sans-serif;
+    display:flex;
+    min-height:100vh;
+  }
+  /* ---------- LEFT CONTROL PANEL ---------- */
+  .controls{
+    width:380px;
+    min-width:380px;
+    background:var(--bg-panel);
+    padding:24px;
+    border-right:1px solid var(--line);
+    overflow-y:auto;
+    height:100vh;
+    position:sticky;
+    top:0;
+  }
+  .controls h1{
+    font-size:18px;
+    letter-spacing:0.5px;
+    margin-bottom:4px;
+  }
+  .controls h1 span{color:var(--red)}
+  .controls .sub{
+    font-size:11px;
+    color:var(--grey);
+    margin-bottom:20px;
+    text-transform:uppercase;
+    letter-spacing:1px;
+  }
+  .scenario-tabs{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-bottom:20px;
+  }
+  .scenario-tabs button{
+    flex:1 1 calc(50% - 6px);
+    background:#1f1f1f;
+    color:var(--grey);
+    border:1px solid var(--line);
+    padding:8px 6px;
+    font-size:10.5px;
+    cursor:pointer;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+    font-weight:600;
+    transition:all .15s;
+  }
+  .scenario-tabs button.active{
+    background:var(--red);
+    color:#fff;
+    border-color:var(--red);
+  }
+  .mode-toggle-row{
+    display:flex;
+    gap:6px;
+    margin-bottom:20px;
+    border:1px solid var(--line);
+    padding:4px;
+    border-radius:4px;
+  }
+  .mode-toggle-btn{
+    flex:1;
+    background:transparent;
+    color:var(--grey);
+    border:none;
+    padding:10px 6px;
+    font-size:11px;
+    cursor:pointer;
+    font-weight:700;
+    border-radius:3px;
+    transition:all .15s;
+  }
+  .mode-toggle-btn.active{
+    background:var(--red);
+    color:#fff;
+  }
+  .field{margin-bottom:14px;}
+  .field label{
+    display:block;
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:0.8px;
+    color:var(--grey);
+    margin-bottom:6px;
+    font-weight:600;
+  }
+  .field input, .field textarea, .field select{
+    width:100%;
+    background:#1f1f1f;
+    border:1px solid var(--line);
+    color:var(--off-white);
+    padding:9px 10px;
+    font-size:13px;
+    font-family:inherit;
+    resize:vertical;
+  }
+  .field textarea{min-height:60px;}
+  .field input:focus, .field textarea:focus{
+    outline:none;
+    border-color:var(--red);
+  }
+  .flag-options{
+    display:flex;
+    gap:6px;
+  }
+  .flag-options button{
+    flex:1;
+    padding:8px 4px;
+    background:#1f1f1f;
+    border:1px solid var(--line);
+    color:var(--off-white);
+    cursor:pointer;
+    font-size:11px;
+    font-weight:700;
+  }
+  .flag-options button.active{
+    border-color:var(--red);
+    background:#2a1414;
+  }
+  .download-btn{
+    width:100%;
+    background:var(--red);
+    color:#fff;
+    border:none;
+    padding:13px;
+    font-size:13px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    cursor:pointer;
+    margin-top:10px;
+  }
+  .download-btn:hover{background:#ff0700;}
+  .note{
+    font-size:11px;
+    color:var(--grey);
+    margin-top:16px;
+    line-height:1.5;
+    border-top:1px solid var(--line);
+    padding-top:14px;
+  }
+
+  /* ---------- RIGHT PREVIEW AREA ---------- */
+  .preview-area{
+    flex:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:40px;
+    background:
+      linear-gradient(45deg, #222 25%, transparent 25%),
+      linear-gradient(-45deg, #222 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #222 75%),
+      linear-gradient(-45deg, transparent 75%, #222 75%);
+    background-size:20px 20px;
+    background-position:0 0, 0 10px, 10px -10px, -10px 0px;
+    background-color:#181818;
+  }
+
+  /* ---------- THE CARD ITSELF (1080x1350 scaled) ---------- */
+  #card{
+    width:540px;
+    height:675px;
+    background:var(--bg);
+    position:relative;
+    overflow:hidden;
+    box-shadow:0 20px 60px rgba(0,0,0,0.6);
+    font-family:'Helvetica Neue',Arial,sans-serif;
+  }
+  #card.square{height:540px;}
+
+  .broadcast-bar{
+    position:absolute;
+    top:0; left:0; right:0;
+    height:6px;
+    background:linear-gradient(90deg, var(--red) 0%, var(--red) 50%, var(--red-dim) 50%, var(--red-dim) 100%);
+    background-size:40px 6px;
+  }
+
+  .card-inner{
+    padding:36px 34px;
+    height:100%;
+    display:flex;
+    flex-direction:column;
+  }
+
+  .brand-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:28px;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:12px;
+    font-weight:800;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    color:var(--off-white);
+    text-shadow:0 1px 6px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.9);
+  }
+  .brand::before{
+    content:'';
+    display:inline-block;
+    width:4px;
+    height:16px;
+    background:var(--red);
+    flex-shrink:0;
+  }
+  .brand span{color:var(--red);}
+  .live-dot{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-size:9px;
+    letter-spacing:1.5px;
+    color:var(--grey);
+    text-transform:uppercase;
+    font-weight:700;
+    text-shadow:0 1px 6px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.9);
+  }
+  .live-dot::before{
+    content:'';
+    width:7px;height:7px;
+    border-radius:50%;
+    background:var(--red);
+  }
+
+  .flag-tab{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:6px 2px 8px 2px;
+    background:rgba(8,8,8,0.78);
+    color:#fff;
+    font-size:11px;
+    font-weight:800;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    margin-bottom:18px;
+    align-self:flex-start;
+    border-bottom:2px solid var(--off-white);
+    text-shadow:0 1px 4px rgba(0,0,0,0.7);
+  }
+  .flag-tab.confirmed{color:#2ECC71; border-bottom-color:#2ECC71;}
+  .flag-tab.reported{color:#F0B23D; border-bottom-color:#F0B23D;}
+  .flag-tab.via{color:#4FA3DE; border-bottom-color:#4FA3DE;}
+  .flag-tab.rumored{color:#a8a8a4; border-bottom-color:#5a5a5a;}
+
+  .headline{
+    font-family:'Oswald',sans-serif;
+    font-size:38px;
+    font-weight:700;
+    line-height:1.05;
+    letter-spacing:-0.3px;
+    text-transform:uppercase;
+    margin-bottom:auto;
+    color:var(--off-white);
+  }
+  .headline .accent{color:var(--red);}
+
+  /* Text block backing for full-background photo mode — guarantees readability regardless of image */
+  .text-shelf{
+    background:rgba(8,8,8,0.92);
+    padding:18px 20px;
+    margin-top:auto;
+    margin-left:-34px;
+    margin-right:-34px;
+    padding-left:34px;
+    padding-right:34px;
+    border-top:2px solid var(--red);
+  }
+  .text-shelf .headline{
+    margin-bottom:10px;
+  }
+
+  .body-text{
+    font-size:17px;
+    line-height:1.55;
+    color:#d8d6d0;
+    margin-top:18px;
+  }
+
+  .source-line{
+    font-size:11px;
+    color:var(--grey);
+    text-transform:uppercase;
+    letter-spacing:1px;
+    margin-top:16px;
+    padding-top:14px;
+    border-top:1px solid var(--line);
+    font-weight:700;
+  }
+  .source-line span{color:var(--off-white);}
+
+  .take-label{
+    font-size:11px;
+    font-weight:800;
+    letter-spacing:1.5px;
+    color:var(--red);
+    text-transform:uppercase;
+    margin-bottom:10px;
+  }
+
+  .footer-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    margin-top:auto;
+    padding-top:20px;
+  }
+  .footer-handle{
+    font-size:11px;
+    color:var(--grey);
+    font-weight:600;
+  }
+  .footer-handle b{color:var(--off-white);}
+
+  /* Score card specific */
+  .score-row{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:24px;
+    margin:30px 0;
+  }
+  .team{
+    flex:1;
+    text-align:center;
+  }
+  .team-name{
+    font-family:'Oswald',sans-serif;
+    font-size:19px;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+    line-height:1.2;
+  }
+  .score-big{
+    font-family:'Oswald',sans-serif;
+    font-size:64px;
+    font-weight:700;
+    color:var(--off-white);
+    line-height:1;
+    display:flex;
+    align-items:center;
+    gap:14px;
+  }
+  .score-big .dash{color:var(--red); font-size:40px;}
+  .minute-badge{
+    text-align:center;
+    font-size:12px;
+    color:var(--grey);
+    letter-spacing:1px;
+    text-transform:uppercase;
+    font-weight:700;
+    margin-bottom:6px;
+  }
+
+  /* ---------- PRE-MATCH LAYOUT ---------- */
+  .prematch-layout{
+    position:relative;
+    z-index:2;
+    height:100%;
+    display:flex;
+    flex-direction:column;
+    padding:36px 34px;
+  }
+  .prematch-competition{
+    text-align:center;
+    font-size:11px;
+    letter-spacing:1.5px;
+    font-weight:700;
+    color:var(--off-white);
+    text-transform:uppercase;
+    margin-top:10px;
+    text-shadow:0 1px 6px rgba(0,0,0,0.8);
+  }
+  .prematch-vs-row{
+    flex:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:40px;
+  }
+  .prematch-team{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:14px;
+  }
+  .prematch-circle{
+    width:130px;
+    height:130px;
+    border-radius:50%;
+    background:#181818;
+    border:3px solid var(--off-white);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+  }
+  .prematch-circle img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+  }
+  .prematch-circle.empty{
+    color:var(--grey);
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    text-align:center;
+    padding:10px;
+  }
+  .prematch-team-name{
+    font-family:'Oswald',sans-serif;
+    font-size:17px;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+    color:var(--off-white);
+    text-align:center;
+    text-shadow:0 1px 6px rgba(0,0,0,0.8);
+  }
+  .prematch-vs{
+    font-size:24px;
+    font-weight:900;
+    color:var(--red);
+    text-shadow:0 1px 6px rgba(0,0,0,0.8);
+  }
+  .prematch-kickoff{
+    text-align:center;
+    font-size:20px;
+    font-weight:800;
+    color:var(--off-white);
+    letter-spacing:0.5px;
+    text-shadow:0 1px 6px rgba(0,0,0,0.8);
+    margin-bottom:6px;
+  }
+
+  .goal-list{
+    margin-top:20px;
+    font-size:13px;
+    color:#c8c6c0;
+    line-height:2;
+  }
+  .goal-list .min{
+    color:var(--red);
+    font-weight:800;
+    margin-right:8px;
+  }
+
+  /* ---------- IMAGE UPLOAD CONTROLS ---------- */
+  .upload-box{
+    border:1.5px dashed var(--line);
+    background:#1f1f1f;
+    padding:14px;
+    text-align:center;
+    cursor:pointer;
+    font-size:11px;
+    color:var(--grey);
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+    font-weight:600;
+    transition:border-color .15s;
+  }
+  .upload-box:hover{border-color:var(--red);}
+  .upload-box.has-image{
+    border-style:solid;
+    border-color:var(--red);
+    color:var(--off-white);
+  }
+  .upload-box input[type=file]{display:none;}
+  .photo-mode-row{
+    display:flex;
+    gap:6px;
+    margin-bottom:10px;
+  }
+  .photo-mode-row button{
+    flex:1;
+    padding:7px 4px;
+    background:#1f1f1f;
+    border:1px solid var(--line);
+    color:var(--grey);
+    cursor:pointer;
+    font-size:10px;
+    font-weight:700;
+    text-transform:uppercase;
+  }
+  .photo-mode-row button.active{
+    border-color:var(--red);
+    background:#2a1414;
+    color:var(--off-white);
+  }
+  .clear-img{
+    font-size:10px;
+    color:var(--red);
+    text-decoration:underline;
+    cursor:pointer;
+    margin-top:6px;
+    display:inline-block;
+  }
+
+  /* ---------- PHOTO TREATMENTS ON CARD ---------- */
+  .photo-bg{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    object-position:center 20%;
+    z-index:0;
+  }
+  .photo-bg-gradient{
+    position:absolute;
+    inset:0;
+    background:linear-gradient(180deg, rgba(10,10,10,0) 0%, rgba(10,10,10,0) 30%, rgba(10,10,10,0.3) 48%, rgba(10,10,10,0.7) 65%, rgba(10,10,10,0.95) 80%, rgba(10,10,10,1) 100%);
+    z-index:1;
+  }
+  #card.has-bg-photo .card-inner{
+    position:relative;
+    z-index:2;
+  }
+  .photo-framed{
+    width:84px;
+    height:84px;
+    border-radius:50%;
+    object-fit:cover;
+    border:2.5px solid var(--red);
+    flex-shrink:0;
+  }
+  .photo-framed-row{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    margin-bottom:16px;
+  }
+
+  /* ---------- PHOTO COVER LAYOUT (flag top / headline lower-middle / subline below it) ---------- */
+  .cover-photo-layout{
+    position:absolute;
+    inset:0;
+    z-index:2;
+    display:flex;
+    flex-direction:column;
+  }
+  .cover-photo-top{
+    padding:36px 34px 0 34px;
+  }
+  .cover-photo-flagzone{
+    margin-top:18px;
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    gap:3px;
+  }
+  .cover-photo-source{
+    font-size:9px;
+    color:var(--off-white);
+    text-transform:uppercase;
+    letter-spacing:0.8px;
+    font-weight:700;
+    background:rgba(8,8,8,0.75);
+    padding:4px 9px;
+  }
+  .cover-photo-middle{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    justify-content:flex-end;
+    align-items:center;
+    text-align:center;
+    padding:0 30px 70px 30px;
+  }
+  .cover-photo-headline{
+    font-family:'Oswald',sans-serif;
+    font-size:40px;
+    font-weight:700;
+    line-height:1.08;
+    letter-spacing:-0.3px;
+    text-transform:uppercase;
+    color:var(--off-white);
+    text-shadow:0 2px 18px rgba(0,0,0,0.9), 0 1px 4px rgba(0,0,0,0.9);
+  }
+  .cover-photo-subline{
+    font-size:22px;
+    font-weight:800;
+    color:var(--red);
+    margin-top:14px;
+    text-shadow:0 2px 12px rgba(0,0,0,0.9);
+  }
+  .cover-photo-footer{
+    padding:0 34px 28px 34px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+</style>
+</head>
+<body>
+
+<div class="controls">
+  <h1>MOROIAN<span>REPORTS</span></h1>
+  <div class="sub">Template Studio</div>
+
+  <div class="mode-toggle-row">
+    <button class="mode-toggle-btn active" data-mode="image">📐 Image Templates</button>
+    <button class="mode-toggle-btn" data-mode="video">🎥 Video Overlay</button>
+  </div>
+
+  <div id="imageModePanel">
+
+  <div class="scenario-tabs">
+    <button class="active" data-scenario="cover">Breaking Cover</button>
+    <button data-scenario="fact">Fact Slide</button>
+    <button data-scenario="take">Tactical Take</button>
+    <button data-scenario="prematch">Pre-Match</button>
+    <button data-scenario="live">Live Goal</button>
+    <button data-scenario="fulltime">Full-Time</button>
+  </div>
+
+  <!-- COVER FIELDS -->
+  <div id="fields-cover" class="field-group">
+    <div class="field">
+      <label>Status Flag</label>
+      <div class="flag-options">
+        <button class="flag-btn active" data-flag="🔴 CONFIRMED" data-style="confirmed">🔴 Confirmed</button>
+        <button class="flag-btn" data-flag="🟡 REPORTED" data-style="reported">🟡 Reported</button>
+        <button class="flag-btn" data-flag="⚪ RUMORED" data-style="rumored">⚪ Rumored</button>
+        <button class="flag-btn" data-flag="🔵 VIA SOURCE" data-style="via">🔵 Via</button>
+        <button class="flag-btn" data-flag="" data-style="none">No Flag</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Source name (if VIA)</label>
+      <input type="text" id="cover-source" value="Fabrizio Romano" placeholder="e.g. Fabrizio Romano">
+    </div>
+    <div class="field">
+      <label>Headline</label>
+      <textarea id="cover-headline">Brighton submit new bid for Vušković</textarea>
+    </div>
+    <div class="field">
+      <label>Subline (number/detail)</label>
+      <input type="text" id="cover-subline" value="£45M+ ADD-ONS">
+    </div>
+    <div class="field">
+      <label>Photo</label>
+      <div class="photo-mode-row">
+        <button class="photo-mode-btn active" data-target="cover" data-mode="bg">Full Background</button>
+        <button class="photo-mode-btn" data-target="cover" data-mode="framed">Framed Circle</button>
+        <button class="photo-mode-btn" data-target="cover" data-mode="none">No Photo</button>
+      </div>
+      <label class="upload-box" id="upload-cover">
+        Click to upload image
+        <input type="file" accept="image/*" id="file-cover">
+      </label>
+      <span class="clear-img" data-target="cover" style="display:none">Remove image</span>
+    </div>
+  </div>
+
+  <!-- FACT FIELDS -->
+  <div id="fields-fact" class="field-group" style="display:none">
+    <div class="field">
+      <label>Status Flag</label>
+      <div class="flag-options">
+        <button class="flag-btn active" data-flag="🔴 CONFIRMED" data-style="confirmed">🔴 Confirmed</button>
+        <button class="flag-btn" data-flag="🟡 REPORTED" data-style="reported">🟡 Reported</button>
+        <button class="flag-btn" data-flag="⚪ RUMORED" data-style="rumored">⚪ Rumored</button>
+        <button class="flag-btn" data-flag="🔵 VIA SOURCE" data-style="via">🔵 Via</button>
+        <button class="flag-btn" data-flag="" data-style="none">No Flag</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>The Fact (your words)</label>
+      <textarea id="fact-body" style="min-height:140px">Brighton have submitted a new official bid to Tottenham for Croatian centre-back Luka Vušković. The proposal is worth £45m including add-ons. Spurs have already rejected two previous offers and are now deciding on his future.</textarea>
+    </div>
+    <div class="field">
+      <label>Source line (optional — leave blank to hide)</label>
+      <input type="text" id="fact-source" value="" placeholder="e.g. Fabrizio Romano">
+    </div>
+    <div class="field">
+      <label>Photo</label>
+      <div class="photo-mode-row">
+        <button class="photo-mode-btn active" data-target="fact" data-mode="bg">Full Background</button>
+        <button class="photo-mode-btn" data-target="fact" data-mode="framed">Framed Circle</button>
+        <button class="photo-mode-btn" data-target="fact" data-mode="none">No Photo</button>
+      </div>
+      <label class="upload-box" id="upload-fact">
+        Click to upload image
+        <input type="file" accept="image/*" id="file-fact">
+      </label>
+      <span class="clear-img" data-target="fact" style="display:none">Remove image</span>
+    </div>
+  </div>
+
+  <!-- TAKE FIELDS -->
+  <div id="fields-take" class="field-group" style="display:none">
+    <div class="field">
+      <label>Take Title</label>
+      <input type="text" id="take-title" value="MOROIAN TAKE">
+    </div>
+    <div class="field">
+      <label>Headline / Angle</label>
+      <textarea id="take-headline">Why this fits Brighton's model</textarea>
+    </div>
+    <div class="field">
+      <label>Analysis Body</label>
+      <textarea id="take-body" style="min-height:140px">Their recruitment targets young, athletic, ball-playing centre-backs who can build from the back under pressure — exactly Vušković's profile at 18.</textarea>
+    </div>
+    <div class="field">
+      <label>Photo</label>
+      <div class="photo-mode-row">
+        <button class="photo-mode-btn active" data-target="take" data-mode="bg">Full Background</button>
+        <button class="photo-mode-btn" data-target="take" data-mode="framed">Framed Circle</button>
+        <button class="photo-mode-btn" data-target="take" data-mode="none">No Photo</button>
+      </div>
+      <label class="upload-box" id="upload-take">
+        Click to upload image
+        <input type="file" accept="image/*" id="file-take">
+      </label>
+      <span class="clear-img" data-target="take" style="display:none">Remove image</span>
+    </div>
+  </div>
+
+  <!-- PRE-MATCH FIELDS -->
+  <div id="fields-prematch" class="field-group" style="display:none">
+    <div class="field">
+      <label>Competition / Context</label>
+      <input type="text" id="pm-competition" value="PREMIER LEAGUE · MATCHDAY 12">
+    </div>
+    <div class="field">
+      <label>Kickoff time</label>
+      <input type="text" id="pm-kickoff" value="TODAY 20:00 CET">
+    </div>
+    <div class="field">
+      <label>Team A name</label>
+      <input type="text" id="pm-teamA-name" value="ARSENAL">
+    </div>
+    <div class="field">
+      <label>Team A logo/photo (circle)</label>
+      <label class="upload-box" id="upload-pmA">
+        Click to upload image
+        <input type="file" accept="image/*" id="file-pmA">
+      </label>
+      <span class="clear-img" data-target="pmA" style="display:none">Remove image</span>
+    </div>
+    <div class="field">
+      <label>Team B name</label>
+      <input type="text" id="pm-teamB-name" value="CHELSEA">
+    </div>
+    <div class="field">
+      <label>Team B logo/photo (circle)</label>
+      <label class="upload-box" id="upload-pmB">
+        Click to upload image
+        <input type="file" accept="image/*" id="file-pmB">
+      </label>
+      <span class="clear-img" data-target="pmB" style="display:none">Remove image</span>
+    </div>
+    <div class="field">
+      <label>Background image (optional)</label>
+      <label class="upload-box" id="upload-pmBg">
+        Click to upload image
+        <input type="file" accept="image/*" id="file-pmBg">
+      </label>
+      <span class="clear-img" data-target="pmBg" style="display:none">Remove image</span>
+    </div>
+  </div>
+
+  <!-- LIVE GOAL FIELDS -->
+  <div id="fields-live" class="field-group" style="display:none">
+    <div class="field">
+      <label>Minute</label>
+      <input type="text" id="live-minute" value="63'">
+    </div>
+    <div class="field">
+      <label>Team A name / score</label>
+      <input type="text" id="live-teamA" value="ARSENAL">
+      <input type="text" id="live-scoreA" value="2" style="margin-top:6px">
+    </div>
+    <div class="field">
+      <label>Team B name / score</label>
+      <input type="text" id="live-teamB" value="CHELSEA">
+      <input type="text" id="live-scoreB" value="1" style="margin-top:6px">
+    </div>
+    <div class="field">
+      <label>Goalscorer</label>
+      <input type="text" id="live-scorer" value="⚽ Saka (63')">
+    </div>
+    <div class="field">
+      <label>Background photo (optional)</label>
+      <label class="upload-box" id="upload-live">
+        Click to upload image
+        <input type="file" accept="image/*" id="file-live">
+      </label>
+      <span class="clear-img" data-target="live" style="display:none">Remove image</span>
+    </div>
+  </div>
+
+  <!-- FULL TIME FIELDS -->
+  <div id="fields-fulltime" class="field-group" style="display:none">
+    <div class="field">
+      <label>Team A name / score</label>
+      <input type="text" id="ft-teamA" value="ARSENAL">
+      <input type="text" id="ft-scoreA" value="2" style="margin-top:6px">
+    </div>
+    <div class="field">
+      <label>Team B name / score</label>
+      <input type="text" id="ft-teamB" value="CHELSEA">
+      <input type="text" id="ft-scoreB" value="1" style="margin-top:6px">
+    </div>
+    <div class="field">
+      <label>Goal list (one per line)</label>
+      <textarea id="ft-goals" style="min-height:60px">23' Saka
+71' Palmer
+84' Saka</textarea>
+    </div>
+    <div class="field">
+      <label>Your summary (1-2 sentences)</label>
+      <textarea id="ft-summary">Arsenal controlled the midfield press all game and Saka's brace settled it — Chelsea never adjusted their build-up shape after going behind.</textarea>
+    </div>
+    <div class="field">
+      <label>Background photo (optional)</label>
+      <label class="upload-box" id="upload-fulltime">
+        Click to upload image
+        <input type="file" accept="image/*" id="file-fulltime">
+      </label>
+      <span class="clear-img" data-target="fulltime" style="display:none">Remove image</span>
+    </div>
+  </div>
+
+  <button class="download-btn" id="downloadBtn">Download PNG (1080×1350)</button>
+
+  <div class="note">
+    <b>How to use:</b> Fill the fields, watch the preview update live, hit download. The file saves as a ready-to-upload PNG sized for Instagram.
+  </div>
+
+  </div><!-- /imageModePanel -->
+
+  <div id="videoModePanel" style="display:none">
+    <div class="field">
+      <label>Video source</label>
+      <div class="photo-mode-row">
+        <button class="video-source-btn active" data-source="upload">Upload File</button>
+        <button class="video-source-btn" data-source="camera">Record with Camera</button>
+      </div>
+    </div>
+
+    <div class="field" id="upload-source-field">
+      <label>Upload your video (talking-head clip)</label>
+      <label class="upload-box" id="upload-videoFile">
+        Click to upload video
+        <input type="file" accept="video/*" id="file-videoFile">
+      </label>
+      <div style="font-size:10px; color:var(--grey); margin-top:6px; line-height:1.4;">
+        Note: uploaded files get decoded and redrawn once, which can soften quality slightly. For best quality, use Record with Camera instead — it skips that extra step.
+      </div>
+    </div>
+
+    <div class="field" id="camera-source-field" style="display:none">
+      <button class="download-btn" id="startCameraBtn" style="background:#2a2a2a;">🎥 Start Camera</button>
+      <div id="cameraPreviewBox" style="display:none; margin-top:10px;">
+        <video id="liveCameraPreview" autoplay playsinline muted style="width:100%; border:1px solid var(--line); background:#000;"></video>
+        <div style="display:flex; gap:6px; margin-top:8px;">
+          <button class="download-btn" id="startRecordCameraBtn" style="flex:1; padding:10px;">⏺ Start Recording</button>
+          <button class="download-btn" id="stopRecordCameraBtn" style="flex:1; padding:10px; background:#333; display:none;">⏹ Stop</button>
+        </div>
+      </div>
+      <div style="font-size:10px; color:var(--grey); margin-top:6px; line-height:1.4;">
+        Records directly at your camera's native quality with the overlay burned in live — no upload/redraw step, so quality stays closest to the source.
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Overlay type</label>
+      <select id="video-overlay-type">
+        <option value="breaking">Breaking News Lower-Third</option>
+        <option value="score">Final Score Lower-Third</option>
+        <option value="none">No Overlay (just status flag)</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Status Flag</label>
+      <div class="flag-options">
+        <button class="vflag-btn active" data-flag="🔴 CONFIRMED" data-style="confirmed">🔴 Confirmed</button>
+        <button class="vflag-btn" data-flag="🟡 REPORTED" data-style="reported">🟡 Reported</button>
+        <button class="vflag-btn" data-flag="⚪ RUMORED" data-style="rumored">⚪ Rumored</button>
+        <button class="vflag-btn" data-flag="" data-style="none">No Flag</button>
+      </div>
+    </div>
+
+    <div id="video-breaking-fields">
+      <div class="field">
+        <label>Headline</label>
+        <input type="text" id="video-headline" value="Brighton submit new bid for Vušković">
+      </div>
+      <div class="field">
+        <label>Subline</label>
+        <input type="text" id="video-subline" value="£45M+ ADD-ONS">
+      </div>
+    </div>
+
+    <div id="video-score-fields" style="display:none">
+      <div class="field">
+        <label>Team A name / score</label>
+        <input type="text" id="video-teamA" value="ARSENAL">
+        <input type="text" id="video-scoreA" value="2" style="margin-top:6px">
+      </div>
+      <div class="field">
+        <label>Team B name / score</label>
+        <input type="text" id="video-teamB" value="CHELSEA">
+        <input type="text" id="video-scoreB" value="1" style="margin-top:6px">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Overlay position</label>
+      <div class="photo-mode-row">
+        <button class="voverlay-pos-btn active" data-pos="bottom">Bottom Third</button>
+        <button class="voverlay-pos-btn" data-pos="top">Top Bar</button>
+      </div>
+    </div>
+
+    <button class="download-btn" id="recordBtn">💾 Save Video</button>
+    <button class="download-btn" id="stopBtn" style="display:none; background:#333;">⏹ Stop & Save Now</button>
+    <div id="recordStatus" style="font-size:11px; color:var(--grey); margin-top:8px; text-align:center;"></div>
+
+    <div class="note">
+      <b>How this works:</b> Upload your clip, set your overlay text. Click "Save Video" — it plays through your full clip once in the background (this is required to bake the graphic onto every frame) and then downloads the finished file automatically. It takes the same length as your video to process — e.g. a 30-second clip takes about 30 seconds.
+    </div>
+  </div>
+
+</div>
+
+<div class="preview-area">
+  <div id="card" style="display:block;">
+    <div class="broadcast-bar"></div>
+    <div class="card-inner" id="cardContent"></div>
+  </div>
+
+  <div id="videoPreviewWrap" style="display:none; position:relative;">
+    <video id="sourceVideo" style="display:none;" playsinline></video>
+    <canvas id="videoCanvas" width="1080" height="1920" style="width:480px; height:854px; background:#000; box-shadow:0 20px 60px rgba(0,0,0,0.6);"></canvas>
+    <div style="text-align:center; margin-top:14px;">
+      <button id="playPauseBtn" class="download-btn" style="width:auto; padding:10px 24px;">▶ Play Preview</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+let state = {
+  scenario: 'cover',
+  flag: '🔴 CONFIRMED',
+  flagStyle: 'confirmed',
+  photoMode: { cover: 'bg', fact: 'bg', take: 'bg' },
+  images: { cover: null, fact: null, take: null, pmA: null, pmB: null, pmBg: null, live: null, fulltime: null }
+};
+
+// Photo mode toggle — scoped per target (cover / fact / take), each with its own active state
+document.querySelectorAll('.photo-mode-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const target = btn.dataset.target;
+    document.querySelectorAll('.photo-mode-btn[data-target="'+target+'"]').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    state.photoMode[target] = btn.dataset.mode;
+    render();
+  });
+});
+
+// Image upload handling for each upload slot
+['cover','fact','take','pmA','pmB','pmBg','live','fulltime'].forEach(key=>{
+  const fileInput = document.getElementById('file-'+key);
+  const uploadBox = document.getElementById('upload-'+key);
+  const clearBtn = document.querySelector('.clear-img[data-target="'+key+'"]');
+  if(!fileInput) return;
+
+  fileInput.addEventListener('change', (e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev)=>{
+      state.images[key] = ev.target.result;
+      uploadBox.classList.add('has-image');
+      uploadBox.firstChild.textContent = 'Image loaded — click to replace';
+      clearBtn.style.display = 'inline-block';
+      render();
+    };
+    reader.readAsDataURL(file);
+  });
+
+  clearBtn.addEventListener('click', (e)=>{
+    e.preventDefault();
+    state.images[key] = null;
+    fileInput.value = '';
+    uploadBox.classList.remove('has-image');
+    uploadBox.firstChild.textContent = 'Click to upload image';
+    clearBtn.style.display = 'none';
+    render();
+  });
+});
+
+const scenarioTabs = document.querySelectorAll('.scenario-tabs button');
+scenarioTabs.forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    scenarioTabs.forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    state.scenario = btn.dataset.scenario;
+    document.querySelectorAll('.field-group').forEach(g=>g.style.display='none');
+    document.getElementById('fields-'+state.scenario).style.display='block';
+    render();
+  });
+});
+
+document.querySelectorAll('.flag-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.flag-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    state.flag = btn.dataset.flag;
+    state.flagStyle = btn.dataset.style;
+    render();
+  });
+});
+
+document.querySelectorAll('input, textarea').forEach(el=>{
+  el.addEventListener('input', render);
+});
+
+function esc(s){
+  const d = document.createElement('div');
+  d.innerText = s;
+  return d.innerHTML;
+}
+
+function render(){
+  const card = document.getElementById('card');
+  const content = document.getElementById('cardContent');
+  card.classList.remove('square');
+
+  if(state.scenario === 'cover'){
+    const hasFlag = state.flagStyle !== 'none';
+    const isVia = hasFlag && state.flag.includes('VIA');
+    const img = state.images.cover;
+    const useBg = img && state.photoMode.cover === 'bg';
+    const useFramed = img && state.photoMode.cover === 'framed';
+    const sourceText = isVia ? esc(document.getElementById('cover-source').value) : '';
+
+    card.classList.toggle('has-bg-photo', !!useBg);
+
+    const flagBlockTop = hasFlag ? `<div class="cover-photo-flagzone">
+              <div class="flag-tab ${state.flagStyle}" style="margin-bottom:0;">${state.flag}</div>
+              ${sourceText ? `<div class="cover-photo-source">${sourceText}</div>` : ''}
+            </div>` : '';
+
+    if(useBg){
+      // Photo mode: flag+source pinned top, headline centered lower-middle, subline directly beneath.
+      content.innerHTML = `
+        <img src="${img}" class="photo-bg">
+        <div class="photo-bg-gradient"></div>
+        <div class="cover-photo-layout">
+          <div class="cover-photo-top">
+            <div class="brand-row" style="margin-bottom:0;">
+              <div class="brand">MOROIAN<span>REPORTS</span></div>
+              <div class="live-dot" style="color:var(--off-white);">Breaking</div>
+            </div>
+            ${flagBlockTop}
+          </div>
+          <div class="cover-photo-middle">
+            <div class="cover-photo-headline">${esc(document.getElementById('cover-headline').value)}</div>
+            <div class="cover-photo-subline">${esc(document.getElementById('cover-subline').value)}</div>
+          </div>
+          <div class="cover-photo-footer">
+            <div class="footer-handle" style="color:#cfcdc8; font-size:13px;"><b>@moroianreports</b></div>
+            <div class="footer-handle" style="color:#cfcdc8;">Swipe →</div>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    // Non-photo / framed-circle mode: original flat-card flow layout.
+    let framedRow = '';
+    if(useFramed){
+      framedRow = `<div class="photo-framed-row"><img src="${img}" class="photo-framed">${hasFlag ? `<div class="flag-tab ${state.flagStyle}" style="margin-bottom:0;">${state.flag}${isVia ? ' · ' + sourceText : ''}</div>` : ''}</div>`;
+    }
+    const flagFlat = hasFlag ? `<div class="flag-tab ${state.flagStyle}">${state.flag}${isVia ? ' · ' + sourceText : ''}</div>` : '';
+
+    content.innerHTML = `
+      <div class="brand-row">
+        <div class="brand">MOROIAN<span>REPORTS</span></div>
+        <div class="live-dot">Breaking</div>
+      </div>
+      ${framedRow ? framedRow : flagFlat}
+      <div class="headline">${esc(document.getElementById('cover-headline').value)}</div>
+      <div class="body-text" style="font-size:22px; font-weight:800; color:var(--red); margin-top:auto;">${esc(document.getElementById('cover-subline').value)}</div>
+      <div class="footer-row">
+        <div class="footer-handle"><b>@moroianreports</b></div>
+        <div class="footer-handle">Swipe →</div>
+      </div>
+    `;
+  }
+
+  if(state.scenario === 'fact'){
+    const hasFlag = state.flagStyle !== 'none';
+    const img = state.images.fact;
+    const useBg = img && state.photoMode.fact === 'bg';
+    const useFramed = img && state.photoMode.fact === 'framed';
+
+    card.classList.toggle('has-bg-photo', !!useBg);
+
+    const flagHtml = hasFlag ? `<div class="flag-tab ${state.flagStyle}" style="margin-bottom:0;">${state.flag}</div>` : '';
+    const framedRow = useFramed ? `<div class="photo-framed-row"><img src="${img}" class="photo-framed">${flagHtml}</div>` : '';
+    const bgLayer = useBg ? `<img src="${img}" class="photo-bg"><div class="photo-bg-gradient"></div>` : '';
+
+    const sourceVal = document.getElementById('fact-source').value.trim();
+    const sourceHtml = sourceVal ? `<div class="source-line" style="${useBg ? 'color:#cfcdc8;' : ''}">Source: <span style="${useBg ? 'color:#fff;' : ''}">${esc(sourceVal)}</span></div>` : '';
+
+    content.innerHTML = `
+      ${bgLayer}
+      <div class="brand-row" style="${useBg ? 'position:relative; z-index:2;' : ''}">
+        <div class="brand">MOROIAN<span>REPORTS</span></div>
+        <div class="live-dot" style="${useBg ? 'color:#fff;' : ''}">The Facts</div>
+      </div>
+      <div style="flex:${useBg ? '1.4' : '1'};"></div>
+      <div style="position:relative; z-index:2; ${useBg ? 'text-shadow:0 2px 14px rgba(0,0,0,0.9);' : ''}">
+        ${framedRow ? framedRow : (hasFlag ? `<div class="flag-tab ${state.flagStyle}" style="${useBg ? 'margin-bottom:14px;' : ''}">${state.flag}</div>` : '')}
+        <div class="body-text" style="font-size:${useBg ? '19px' : '22px'}; line-height:1.45; font-weight:500; color:${useBg ? '#fff' : 'var(--off-white)'}; margin-top:${hasFlag ? '0' : '14px'};">${esc(document.getElementById('fact-body').value)}</div>
+        ${sourceHtml}
+      </div>
+      <div class="footer-row" style="position:relative; z-index:2; margin-top:${useBg ? '14px' : '20px'};">
+        <div class="footer-handle" style="${useBg ? 'color:#cfcdc8;' : ''}"><b>@moroianreports</b></div>
+      </div>
+    `;
+  }
+
+  if(state.scenario === 'take'){
+    const hasFlag = state.flagStyle !== 'none';
+    const img = state.images.take;
+    const useBg = img && state.photoMode.take === 'bg';
+    const useFramed = img && state.photoMode.take === 'framed';
+
+    card.classList.toggle('has-bg-photo', !!useBg);
+
+    const takeLabelHtml = `<div class="take-label" style="margin-bottom:0;">🎙️ ${esc(document.getElementById('take-title').value)}</div>`;
+    const framedRow = useFramed ? `<div class="photo-framed-row"><img src="${img}" class="photo-framed">${takeLabelHtml}</div>` : '';
+    const bgLayer = useBg ? `<img src="${img}" class="photo-bg"><div class="photo-bg-gradient"></div>` : '';
+
+    content.innerHTML = `
+      ${bgLayer}
+      <div class="brand-row" style="${useBg ? 'position:relative; z-index:2;' : ''}">
+        <div class="brand">MOROIAN<span>REPORTS</span></div>
+        <div class="live-dot" style="${useBg ? 'color:#fff;' : ''}">Analysis</div>
+      </div>
+      <div style="flex:${useBg ? '2.6' : '1'};"></div>
+      <div style="position:relative; z-index:2; ${useBg ? 'text-shadow:0 2px 14px rgba(0,0,0,0.9);' : ''}">
+        ${framedRow ? framedRow : `<div class="take-label">🎙️ ${esc(document.getElementById('take-title').value)}</div>`}
+        <div class="headline" style="font-size:30px; margin-bottom:18px; margin-top:${useFramed ? '0' : '10px'}; color:${useBg ? '#fff' : 'var(--off-white)'};">${esc(document.getElementById('take-headline').value)}</div>
+        <div class="body-text" style="font-size:18px; margin-top:0; color:${useBg ? '#fff' : 'var(--off-white)'};">${esc(document.getElementById('take-body').value)}</div>
+      </div>
+      <div class="footer-row" style="position:relative; z-index:2; margin-top:${useBg ? '14px' : '20px'};">
+        <div class="footer-handle" style="${useBg ? 'color:#cfcdc8;' : ''}"><b>@moroianreports</b></div>
+        <div class="footer-handle" style="${useBg ? 'color:#cfcdc8;' : ''}">Ex-pro insight</div>
+      </div>
+    `;
+  }
+
+  if(state.scenario === 'prematch'){
+    card.classList.remove('has-bg-photo');
+    const bgImg = state.images.pmBg;
+    const imgA = state.images.pmA;
+    const imgB = state.images.pmB;
+
+    const bgLayer = bgImg ? `<img src="${bgImg}" class="photo-bg"><div class="photo-bg-gradient"></div>` : '';
+
+    const circleA = imgA ? `<div class="prematch-circle"><img src="${imgA}"></div>` : `<div class="prematch-circle empty">Upload<br>Logo</div>`;
+    const circleB = imgB ? `<div class="prematch-circle"><img src="${imgB}"></div>` : `<div class="prematch-circle empty">Upload<br>Logo</div>`;
+
+    content.innerHTML = `
+      ${bgLayer}
+      <div class="prematch-layout">
+        <div class="brand-row">
+          <div class="brand">MOROIAN<span>REPORTS</span></div>
+          <div class="live-dot" style="${bgImg ? 'color:var(--off-white);' : ''}">Preview</div>
+        </div>
+        <div class="prematch-competition">${esc(document.getElementById('pm-competition').value)}</div>
+        <div class="prematch-vs-row">
+          <div class="prematch-team">
+            ${circleA}
+            <div class="prematch-team-name">${esc(document.getElementById('pm-teamA-name').value)}</div>
+          </div>
+          <div class="prematch-vs">VS</div>
+          <div class="prematch-team">
+            ${circleB}
+            <div class="prematch-team-name">${esc(document.getElementById('pm-teamB-name').value)}</div>
+          </div>
+        </div>
+        <div class="prematch-kickoff">${esc(document.getElementById('pm-kickoff').value)}</div>
+        <div class="footer-row">
+          <div class="footer-handle" style="${bgImg ? 'color:#cfcdc8;' : ''}"><b>@moroianreports</b></div>
+        </div>
+      </div>
+    `;
+  }
+
+  if(state.scenario === 'live'){
+    card.classList.add('square');
+    const img = state.images.live;
+    card.classList.toggle('has-bg-photo', !!img);
+    const bgLayer = img ? `<img src="${img}" class="photo-bg"><div class="photo-bg-gradient"></div>` : '';
+
+    content.innerHTML = `
+      ${bgLayer}
+      <div class="brand-row" style="${img ? 'position:relative; z-index:2;' : ''}">
+        <div class="brand">MOROIAN<span>REPORTS</span></div>
+        <div class="live-dot" style="color:${img ? '#fff' : 'var(--red)'}">Live</div>
+      </div>
+      <div style="flex:1;"></div>
+      <div style="position:relative; z-index:2; text-align:center;">
+        <div class="minute-badge" style="${img ? 'color:#cfcdc8;' : ''}">${esc(document.getElementById('live-minute').value)} — GOAL</div>
+        <div class="score-row" style="${img ? 'text-shadow:0 2px 14px rgba(0,0,0,0.9);' : ''}">
+          <div class="team"><div class="team-name">${esc(document.getElementById('live-teamA').value)}</div></div>
+          <div class="score-big">${esc(document.getElementById('live-scoreA').value)}<span class="dash">–</span>${esc(document.getElementById('live-scoreB').value)}</div>
+          <div class="team"><div class="team-name">${esc(document.getElementById('live-teamB').value)}</div></div>
+        </div>
+        <div class="headline" style="font-size:26px; text-align:center; margin-top:10px; ${img ? 'text-shadow:0 2px 14px rgba(0,0,0,0.9);' : ''}">${esc(document.getElementById('live-scorer').value)}</div>
+      </div>
+      <div class="footer-row" style="position:relative; z-index:2; margin-top:24px;">
+        <div class="footer-handle" style="${img ? 'color:#cfcdc8;' : ''}"><b>@moroianreports</b></div>
+        <div class="footer-handle" style="${img ? 'color:#cfcdc8;' : ''}">LIVE</div>
+      </div>
+    `;
+  }
+
+  if(state.scenario === 'fulltime'){
+    const img = state.images.fulltime;
+    card.classList.toggle('has-bg-photo', !!img);
+    const bgLayer = img ? `<img src="${img}" class="photo-bg"><div class="photo-bg-gradient"></div>` : '';
+
+    const goals = document.getElementById('ft-goals').value.split('\n').filter(x=>x.trim()).map(g=>{
+      const parts = g.trim().split(' ');
+      const min = parts[0];
+      const rest = parts.slice(1).join(' ');
+      return `<div><span class="min">${esc(min)}</span>${esc(rest)}</div>`;
+    }).join('');
+
+    content.innerHTML = `
+      ${bgLayer}
+      <div class="brand-row" style="${img ? 'position:relative; z-index:2;' : ''}">
+        <div class="brand">MOROIAN<span>REPORTS</span></div>
+        <div class="live-dot" style="${img ? 'color:#fff;' : ''}">Full-Time</div>
+      </div>
+      <div style="flex:${img ? '3.2' : '1'};"></div>
+      <div style="position:relative; z-index:2; text-align:center; ${img ? 'text-shadow:0 2px 14px rgba(0,0,0,0.9);' : ''}">
+        <div class="minute-badge" style="${img ? 'color:#cfcdc8;' : ''} display:block; line-height:1; padding-bottom:22px;">FULL TIME</div>
+        <div class="score-row" style="${img ? 'margin:0 0 6px 0;' : 'margin-top:0;'}">
+          <div class="team"><div class="team-name">${esc(document.getElementById('ft-teamA').value)}</div></div>
+          <div class="score-big">${esc(document.getElementById('ft-scoreA').value)}<span class="dash">–</span>${esc(document.getElementById('ft-scoreB').value)}</div>
+          <div class="team"><div class="team-name">${esc(document.getElementById('ft-teamB').value)}</div></div>
+        </div>
+        <div class="goal-list" style="text-align:left; display:inline-block; ${img ? 'line-height:1.5; font-size:12px;' : ''}">${goals}</div>
+      </div>
+      <div style="position:relative; z-index:2; text-align:center; margin-top:${img ? '8px' : '18px'}; ${img ? 'text-shadow:0 2px 10px rgba(0,0,0,0.9);' : ''}">
+        <div class="take-label" style="margin-bottom:${img ? '4px' : '8px'};">🎙️ MOROIAN TAKE</div>
+        <div style="color:${img ? '#fff' : 'var(--off-white)'}; font-size:${img ? '13px' : '14px'}; line-height:1.5; text-transform:none; letter-spacing:0; font-weight:400;">${esc(document.getElementById('ft-summary').value)}</div>
+      </div>
+      <div class="footer-row" style="position:relative; z-index:2; margin-top:${img ? '10px' : '20px'};">
+        <div class="footer-handle" style="${img ? 'color:#cfcdc8;' : ''}"><b>@moroianreports</b></div>
+      </div>
+    `;
+  }
+}
+
+document.getElementById('downloadBtn').addEventListener('click', ()=>{
+  const card = document.getElementById('card');
+  const scale = 1080 / card.offsetWidth;
+  html2canvas(card, {
+    scale: scale,
+    backgroundColor: '#0A0A0A'
+  }).then(canvas=>{
+    const link = document.createElement('a');
+    link.download = 'moroian-' + state.scenario + '-' + Date.now() + '.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  });
+});
+
+render();
+
+/* ============================================================
+   MODE TOGGLE — Image Templates vs Video Overlay
+   ============================================================ */
+document.querySelectorAll('.mode-toggle-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.mode-toggle-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const mode = btn.dataset.mode;
+    document.getElementById('imageModePanel').style.display = mode === 'image' ? 'block' : 'none';
+    document.getElementById('videoModePanel').style.display = mode === 'video' ? 'block' : 'none';
+    document.getElementById('card').style.display = mode === 'image' ? 'block' : 'none';
+    document.getElementById('videoPreviewWrap').style.display = mode === 'video' ? 'block' : 'none';
+  });
+});
+
+/* ============================================================
+   VIDEO OVERLAY SYSTEM
+   ============================================================ */
+let vState = {
+  flag: '🔴 CONFIRMED',
+  flagStyle: 'confirmed',
+  overlayType: 'breaking',
+  overlayPos: 'bottom',
+  videoLoaded: false,
+  fontReady: false
+};
+
+// Canvas text only honors a web font once the browser confirms it's actually loaded —
+// otherwise drawText silently falls back to a default font with no warning. We load
+// Oswald explicitly here so the video overlay headline matches the photo templates.
+if(document.fonts && document.fonts.load){
+  Promise.all([
+    document.fonts.load('700 40px Oswald'),
+    document.fonts.load('600 24px Oswald')
+  ]).then(()=>{
+    vState.fontReady = true;
+    if(vState.videoLoaded) drawVideoFrame(); // re-draw with the correct font if it loaded late
+  }).catch(()=>{ vState.fontReady = false; }); // falls back to Arial gracefully if it fails
+} 
+
+const HEADLINE_FONT = ()=> vState.fontReady ? 'Oswald' : 'Arial';
+
+const sourceVideo = document.getElementById('sourceVideo');
+const videoCanvas = document.getElementById('videoCanvas');
+const vctx = videoCanvas.getContext('2d');
+let drawLoopActive = false;
+
+// Video source toggle (Upload File vs Record with Camera)
+document.querySelectorAll('.video-source-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.video-source-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const source = btn.dataset.source;
+    document.getElementById('upload-source-field').style.display = source === 'upload' ? 'block' : 'none';
+    document.getElementById('camera-source-field').style.display = source === 'camera' ? 'block' : 'none';
+  });
+});
+
+/* ============================================================
+   LIVE CAMERA RECORDING — records directly from the camera
+   stream through the overlay pipeline, skipping the upload/
+   decode/redraw round-trip that softens quality on uploaded files.
+   ============================================================ */
+let cameraStream = null;
+let cameraMediaRecorder = null;
+let cameraChunks = [];
+
+document.getElementById('startCameraBtn').addEventListener('click', async ()=>{
+  try{
+    cameraStream = await navigator.mediaDevices.getUserMedia({
+      video: { width: { ideal: 1080 }, height: { ideal: 1920 }, facingMode: 'user' },
+      audio: true
+    });
+    const liveVideo = document.getElementById('liveCameraPreview');
+    liveVideo.srcObject = cameraStream;
+    document.getElementById('cameraPreviewBox').style.display = 'block';
+    document.getElementById('startCameraBtn').textContent = '🎥 Camera Active';
+    document.getElementById('startCameraBtn').disabled = true;
+  } catch(err){
+    document.getElementById('recordStatus').textContent =
+      '⚠️ Could not access camera: ' + err.message + '. Check your browser allows camera access for this page.';
+  }
+});
+
+document.getElementById('startRecordCameraBtn').addEventListener('click', ()=>{
+  if(!cameraStream){ return; }
+
+  // Draw the live camera feed + overlay onto the same canvas used everywhere else,
+  // so the exported video matches your template styling exactly.
+  const liveVideo = document.getElementById('liveCameraPreview');
+  vState.videoLoaded = true; // lets drawOverlay's logic run normally
+
+  let cameraDrawLoopActive = true;
+  function drawCameraFrame(){
+    if(!cameraDrawLoopActive) return;
+    const W = videoCanvas.width, H = videoCanvas.height;
+    vctx.imageSmoothingEnabled = true;
+    vctx.imageSmoothingQuality = 'high';
+    vctx.fillStyle = '#000';
+    vctx.fillRect(0,0,W,H);
+    if(liveVideo.videoWidth){
+      const vw = liveVideo.videoWidth, vh = liveVideo.videoHeight;
+      const canvasRatio = W/H, videoRatio = vw/vh;
+      let drawW, drawH, dx, dy;
+      if(videoRatio > canvasRatio){ drawH = H; drawW = H * videoRatio; dx = (W-drawW)/2; dy = 0; }
+      else { drawW = W; drawH = W / videoRatio; dx = 0; dy = (H-drawH)/2; }
+      vctx.drawImage(liveVideo, dx, dy, drawW, drawH);
+    }
+    drawOverlay(vctx, W, H);
+    requestAnimationFrame(drawCameraFrame);
+  }
+  drawCameraFrame();
+
+  // Capture the canvas (video + overlay) and attach the real microphone audio directly —
+  // no Web Audio re-routing needed since this is a live stream, not a pre-recorded element.
+  const canvasStream = videoCanvas.captureStream(30);
+  cameraStream.getAudioTracks().forEach(track => canvasStream.addTrack(track));
+
+  let mimeType = 'video/webm;codecs=vp9,opus';
+  if(!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/webm;codecs=vp8,opus';
+  if(!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/webm';
+
+  cameraChunks = [];
+  cameraMediaRecorder = new MediaRecorder(canvasStream, {
+    mimeType,
+    videoBitsPerSecond: 8000000,
+    audioBitsPerSecond: 192000
+  });
+  cameraMediaRecorder.ondataavailable = (e)=>{ if(e.data.size > 0) cameraChunks.push(e.data); };
+  cameraMediaRecorder.onstop = ()=>{
+    cameraDrawLoopActive = false;
+    const blob = new Blob(cameraChunks, { type: 'video/webm' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'moroian-camera-' + Date.now() + '.webm';
+    link.click();
+    document.getElementById('recordStatus').textContent = 'Recording saved — file downloaded.';
+  };
+
+  cameraMediaRecorder.start(250);
+  document.getElementById('startRecordCameraBtn').style.display = 'none';
+  document.getElementById('stopRecordCameraBtn').style.display = 'block';
+  document.getElementById('recordStatus').textContent = 'Recording from camera — click Stop when finished.';
+});
+
+document.getElementById('stopRecordCameraBtn').addEventListener('click', ()=>{
+  if(cameraMediaRecorder && cameraMediaRecorder.state === 'recording'){
+    cameraMediaRecorder.stop();
+  }
+  document.getElementById('startRecordCameraBtn').style.display = 'block';
+  document.getElementById('stopRecordCameraBtn').style.display = 'none';
+});
+
+// Video file upload
+document.getElementById('file-videoFile').addEventListener('change', (e)=>{
+  console.log('[Moroian] file input change event fired, files:', e.target.files);
+  const file = e.target.files[0];
+  if(!file){ console.log('[Moroian] no file found in event, aborting'); return; }
+  console.log('[Moroian] file selected:', file.name, file.type, file.size, 'bytes');
+  const url = URL.createObjectURL(file);
+  sourceVideo.src = url;
+  sourceVideo.playsInline = true;
+  vState.videoLoaded = false; // only set true once we confirm it actually decodes
+
+  const uploadBox = document.getElementById('upload-videoFile');
+  uploadBox.classList.remove('has-image');
+  uploadBox.firstChild.textContent = 'Checking video…';
+  document.getElementById('recordStatus').textContent = '';
+
+  // Safety net: if no load/error event fires within 8 seconds for any reason,
+  // surface a message instead of leaving the box stuck on "Checking video…" forever.
+  const stuckTimeout = setTimeout(()=>{
+    console.log('[Moroian] 8s stuck-timeout fired, videoLoaded still false. readyState:', sourceVideo.readyState, 'networkState:', sourceVideo.networkState, 'error:', sourceVideo.error);
+    if(!vState.videoLoaded){
+      uploadBox.classList.remove('has-image');
+      uploadBox.firstChild.textContent = 'Click to upload video';
+      document.getElementById('recordStatus').textContent =
+        '⚠️ The video didn\'t load after several seconds. Try a different file, ' +
+        'or re-export it as a standard H.264 .mp4 and try again.';
+    }
+  }, 8000);
+
+  const markLoaded = ()=>{
+    if(vState.videoLoaded) return;
+    clearTimeout(stuckTimeout);
+    vState.videoLoaded = true;
+    uploadBox.classList.add('has-image');
+    uploadBox.firstChild.textContent = 'Video loaded — click to replace';
+  };
+
+  sourceVideo.addEventListener('loadedmetadata', ()=>{
+    console.log('[Moroian] loadedmetadata fired, videoWidth:', sourceVideo.videoWidth, 'videoHeight:', sourceVideo.videoHeight, 'readyState:', sourceVideo.readyState);
+    if(sourceVideo.videoWidth > 0) markLoaded();
+
+    // Safari/WebKit has a known bug where drawImage() on a merely-seeked (never-played)
+    // video frame can render solid black on canvas. The reliable workaround is to
+    // briefly autoplay muted (allowed without a user gesture) to force a genuine
+    // decoded frame, draw it, then pause and restore sound for the real preview/export.
+    // play() can throw synchronously in some engines rather than rejecting — wrapped
+    // in try/catch so a failure here can never silently break the rest of the upload flow.
+    try{
+      sourceVideo.muted = true;
+      const p = sourceVideo.play();
+      if(p && p.then){
+        p.then(()=>{
+          requestAnimationFrame(()=>{
+            try{
+              drawVideoFrame();
+              sourceVideo.pause();
+              sourceVideo.currentTime = 0;
+              sourceVideo.muted = false;
+              drawVideoFrame();
+            } catch(err){
+              console.warn('Frame draw after autoplay failed:', err);
+              sourceVideo.muted = false;
+            }
+          });
+        }).catch((err)=>{
+          // Autoplay blocked — fall back to seek-based attempt, still better than nothing.
+          console.warn('Autoplay for first-frame capture was blocked:', err);
+          sourceVideo.muted = false;
+          sourceVideo.currentTime = 0.01;
+        });
+      } else {
+        // play() didn't return a promise (older browser) — fall back to seek immediately.
+        sourceVideo.muted = false;
+        sourceVideo.currentTime = 0.01;
+      }
+    } catch(err){
+      console.warn('play() threw synchronously:', err);
+      sourceVideo.muted = false;
+      sourceVideo.currentTime = 0.01;
+      if(sourceVideo.videoWidth > 0) drawVideoFrame();
+    }
+  });
+
+  // Backup: if a frame becomes available via any other event, draw it too.
+  sourceVideo.addEventListener('loadeddata', ()=>{
+    if(sourceVideo.videoWidth > 0){ markLoaded(); drawVideoFrame(); }
+  });
+  sourceVideo.addEventListener('seeked', ()=>{
+    if(sourceVideo.videoWidth > 0){ markLoaded(); drawVideoFrame(); }
+  });
+
+  // Surface real decode failures instead of silently staying black
+  sourceVideo.addEventListener('error', ()=>{
+    console.log('[Moroian] error event fired:', sourceVideo.error);
+    clearTimeout(stuckTimeout);
+    vState.videoLoaded = false;
+    uploadBox.classList.remove('has-image');
+    uploadBox.firstChild.textContent = 'Click to upload video';
+    const errMsg = sourceVideo.error ? sourceVideo.error.message : 'Unknown error';
+    document.getElementById('recordStatus').textContent =
+      '⚠️ This video format isn\'t supported by the browser (' + errMsg + '). ' +
+      'iPhone clips often save as HEVC .mov — try exporting/converting to H.264 .mp4 first, or share via WhatsApp to yourself (it usually re-encodes to a compatible format).';
+  }, {once:true});
+
+  sourceVideo.load();
+});
+
+// Overlay type select
+document.getElementById('video-overlay-type').addEventListener('change', (e)=>{
+  vState.overlayType = e.target.value;
+  document.getElementById('video-breaking-fields').style.display = vState.overlayType === 'breaking' ? 'block' : 'none';
+  document.getElementById('video-score-fields').style.display = vState.overlayType === 'score' ? 'block' : 'none';
+  drawVideoFrame();
+});
+
+// Flag buttons (video panel)
+document.querySelectorAll('.vflag-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.vflag-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    vState.flag = btn.dataset.flag;
+    vState.flagStyle = btn.dataset.style;
+    drawVideoFrame();
+  });
+});
+
+// Overlay position buttons
+document.querySelectorAll('.voverlay-pos-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.voverlay-pos-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    vState.overlayPos = btn.dataset.pos;
+    drawVideoFrame();
+  });
+});
+
+// Re-draw on any text field change
+['video-headline','video-subline','video-teamA','video-scoreA','video-teamB','video-scoreB'].forEach(id=>{
+  const el = document.getElementById(id);
+  if(el) el.addEventListener('input', drawVideoFrame);
+});
+
+const FLAG_COLORS = {
+  confirmed: '#2ECC71',
+  reported: '#F0B23D',
+  via: '#4FA3DE',
+  rumored: '#a8a8a4',
+  none: null
+};
+
+function wrapText(ctx, text, x, y, maxWidth, lineHeight, align){
+  const words = text.split(' ');
+  let line = '';
+  const lines = [];
+  for(let n=0; n<words.length; n++){
+    const testLine = line + words[n] + ' ';
+    if(ctx.measureText(testLine).width > maxWidth && n > 0){
+      lines.push(line.trim());
+      line = words[n] + ' ';
+    } else {
+      line = testLine;
+    }
+  }
+  lines.push(line.trim());
+  lines.forEach((l, i)=>{
+    ctx.fillText(l, x, y + i*lineHeight, maxWidth);
+  });
+  return lines.length;
+}
+
+function drawVideoFrame(){
+  const W = videoCanvas.width, H = videoCanvas.height;
+  vctx.imageSmoothingEnabled = true;
+  vctx.imageSmoothingQuality = 'high';
+  vctx.fillStyle = '#000';
+  vctx.fillRect(0,0,W,H);
+
+  // Draw video frame, cover-fit into 9:16 canvas
+  if(vState.videoLoaded && sourceVideo.videoWidth){
+    const vw = sourceVideo.videoWidth, vh = sourceVideo.videoHeight;
+    const canvasRatio = W/H, videoRatio = vw/vh;
+    let drawW, drawH, dx, dy;
+    if(videoRatio > canvasRatio){
+      drawH = H; drawW = H * videoRatio;
+      dx = (W - drawW)/2; dy = 0;
+    } else {
+      drawW = W; drawH = W / videoRatio;
+      dx = 0; dy = (H - drawH)/2;
+    }
+    vctx.drawImage(sourceVideo, dx, dy, drawW, drawH);
+  } else {
+    vctx.fillStyle = '#1a1a1a';
+    vctx.fillRect(0,0,W,H);
+    vctx.fillStyle = '#555';
+    vctx.font = '600 32px Arial';
+    vctx.textAlign = 'center';
+    vctx.fillText('Upload a video to preview', W/2, H/2);
+    vctx.textAlign = 'left';
+  }
+
+  drawOverlay(vctx, W, H);
+}
+
+function drawOverlay(ctx, W, H){
+  const pad = 56;
+  const isTop = vState.overlayPos === 'top';
+
+  // --- Gradient fade (matches the corrected, brighter .photo-bg-gradient) ---
+  // Stays fully transparent through the middle of the frame so the video reads bright;
+  // only darkens near the edge where text actually sits.
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  if(isTop){
+    grad.addColorStop(0, 'rgba(10,10,10,1)');
+    grad.addColorStop(0.12, 'rgba(10,10,10,0.95)');
+    grad.addColorStop(0.25, 'rgba(10,10,10,0.65)');
+    grad.addColorStop(0.40, 'rgba(10,10,10,0.25)');
+    grad.addColorStop(0.55, 'rgba(10,10,10,0)');
+    grad.addColorStop(1, 'rgba(10,10,10,0)');
+  } else {
+    grad.addColorStop(0, 'rgba(10,10,10,0)');
+    grad.addColorStop(0.50, 'rgba(10,10,10,0)');
+    grad.addColorStop(0.62, 'rgba(10,10,10,0.35)');
+    grad.addColorStop(0.74, 'rgba(10,10,10,0.75)');
+    grad.addColorStop(0.86, 'rgba(10,10,10,0.97)');
+    grad.addColorStop(1, 'rgba(10,10,10,1)');
+  }
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  // --- Brand row (always visible, top) — protected by text-shadow, not a darkened backdrop ---
+  ctx.textAlign = 'left';
+  ctx.shadowColor = 'rgba(0,0,0,0.85)';
+  ctx.shadowBlur = 10;
+  ctx.shadowOffsetY = 1;
+  // Small red accent bar — matches the wordmark treatment used on photo templates
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#E10600';
+  ctx.fillRect(pad, 72, 4, 22);
+  ctx.shadowBlur = 10;
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '900 26px Arial';
+  ctx.fillText('MOROIAN', pad + 14, 90);
+  const moroianWidth = ctx.measureText('MOROIAN').width;
+  ctx.fillStyle = '#E10600';
+  ctx.fillText('REPORTS', pad + 14 + moroianWidth + 6, 90);
+  ctx.font = '700 18px Arial';
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText('● Breaking', W - pad - 110, 90);
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetY = 0;
+
+  if(vState.overlayType === 'none' && vState.flagStyle === 'none') return;
+
+  // --- Text zone: flag pinned near top, headline+subline centered lower-middle (matches Cover photo layout) ---
+  let cursorY = 220;
+
+  if(vState.flagStyle !== 'none'){
+    const flagColor = FLAG_COLORS[vState.flagStyle] || '#fff';
+    ctx.shadowColor = 'rgba(0,0,0,0.7)';
+    ctx.shadowBlur = 6;
+    ctx.font = '800 22px Arial';
+    ctx.fillStyle = flagColor;
+    ctx.fillText(vState.flag, pad, cursorY);
+    const flagW = ctx.measureText(vState.flag).width;
+    ctx.strokeStyle = flagColor;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(pad, cursorY + 10);
+    ctx.lineTo(pad + flagW, cursorY + 10);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+
+  // Headline + subline sit centered, lower-middle of the frame — same composition as your photo Cover template
+  const textCenterY = H - 280;
+  ctx.textAlign = 'center';
+
+  if(vState.overlayType === 'breaking'){
+    const headline = document.getElementById('video-headline').value;
+    const subline = document.getElementById('video-subline').value;
+
+    ctx.fillStyle = '#fff';
+    ctx.font = '700 52px ' + HEADLINE_FONT() + ', Arial';
+    ctx.shadowColor = 'rgba(0,0,0,0.9)';
+    ctx.shadowBlur = 18;
+    const lines = wrapText(ctx, headline.toUpperCase(), W/2, textCenterY, W - pad*2, 58, 'center');
+
+    ctx.fillStyle = '#E10600';
+    ctx.font = '600 34px ' + HEADLINE_FONT() + ', Arial';
+    ctx.shadowBlur = 12;
+    ctx.fillText(subline.toUpperCase(), W/2, textCenterY + (lines-1)*58 + 60);
+    ctx.shadowBlur = 0;
+  }
+
+  if(vState.overlayType === 'score'){
+    const teamA = document.getElementById('video-teamA').value.toUpperCase();
+    const teamB = document.getElementById('video-teamB').value.toUpperCase();
+    const scoreA = document.getElementById('video-scoreA').value;
+    const scoreB = document.getElementById('video-scoreB').value;
+
+    ctx.shadowColor = 'rgba(0,0,0,0.9)';
+    ctx.shadowBlur = 14;
+    ctx.fillStyle = '#fff';
+    ctx.font = '600 32px ' + HEADLINE_FONT() + ', Arial';
+    ctx.fillText(teamA, W*0.27, textCenterY - 70);
+    ctx.fillText(teamB, W*0.73, textCenterY - 70);
+
+    ctx.font = '700 100px ' + HEADLINE_FONT() + ', Arial';
+    ctx.fillStyle = '#fff';
+    ctx.shadowBlur = 18;
+    const scoreText = scoreA + '  –  ' + scoreB;
+    ctx.fillText(scoreText, W/2, textCenterY + 30);
+    ctx.shadowBlur = 0;
+  }
+
+  ctx.textAlign = 'left';
+
+  // Handle, bottom-left — matches photo template footer
+  ctx.font = '700 22px Arial';
+  ctx.fillStyle = '#cfcdc8';
+  ctx.shadowBlur = 0;
+  ctx.fillText('@moroianreports', pad, H - 50);
+}
+
+// Continuous draw loop while playing — uses requestVideoFrameCallback where available,
+// since it's a more reliable "a real frame is ready" signal than requestAnimationFrame,
+// and helps work around known Safari/WebKit black-canvas bugs when drawing video frames.
+function drawLoop(){
+  if(!drawLoopActive) return;
+  drawVideoFrame();
+  if(sourceVideo.requestVideoFrameCallback){
+    sourceVideo.requestVideoFrameCallback(drawLoop);
+  } else {
+    requestAnimationFrame(drawLoop);
+  }
+}
+
+// Play/pause preview
+const playPauseBtn = document.getElementById('playPauseBtn');
+playPauseBtn.addEventListener('click', ()=>{
+  if(!vState.videoLoaded){ alert('Upload a video first.'); return; }
+  if(sourceVideo.paused){
+    sourceVideo.play();
+    drawLoopActive = true;
+    drawLoop();
+    playPauseBtn.textContent = '⏸ Pause Preview';
+  } else {
+    sourceVideo.pause();
+    drawLoopActive = false;
+    playPauseBtn.textContent = '▶ Play Preview';
+  }
+});
+
+/* ---------- RECORDING (canvas + original audio → webm) ---------- */
+let mediaRecorder, recordedChunks = [];
+
+document.getElementById('recordBtn').addEventListener('click', ()=>{
+  if(!vState.videoLoaded){ alert('Upload a video first.'); return; }
+
+  recordedChunks = [];
+  sourceVideo.currentTime = 0;
+
+  // Capture canvas video stream
+  const canvasStream = videoCanvas.captureStream(30);
+
+  // Attach original audio track from the source video
+  let combinedStream = canvasStream;
+  try{
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const sourceNode = audioCtx.createMediaElementSource(sourceVideo);
+    const destNode = audioCtx.createMediaStreamDestination();
+    sourceNode.connect(destNode);
+    sourceNode.connect(audioCtx.destination); // also hear it while recording
+    destNode.stream.getAudioTracks().forEach(track => canvasStream.addTrack(track));
+  } catch(err){
+    console.warn('Audio capture not available, recording video only:', err);
+  }
+
+  let mimeType = 'video/webm;codecs=vp9,opus';
+  if(!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/webm;codecs=vp8,opus';
+  if(!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/webm';
+
+  // Explicit high bitrate — without this, browsers default to a conservative bitrate
+  // tuned for general screen-recording, which compresses fine detail (skin, hair,
+  // background texture) heavily and is the main cause of grainy/blocky exports.
+  // 8 Mbps is well above what 1080x1920 talking-head footage actually needs to stay clean.
+  mediaRecorder = new MediaRecorder(canvasStream, {
+    mimeType,
+    videoBitsPerSecond: 8000000,
+    audioBitsPerSecond: 192000
+  });
+  mediaRecorder.ondataavailable = (e)=>{ if(e.data.size > 0) recordedChunks.push(e.data); };
+  mediaRecorder.onstop = ()=>{
+    const blob = new Blob(recordedChunks, { type: 'video/webm' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'moroian-video-' + Date.now() + '.webm';
+    link.click();
+    document.getElementById('recordStatus').textContent = 'Export complete — file downloaded.';
+  };
+
+  mediaRecorder.start(250); // emit data every 250ms — far more reliable than waiting until stop()
+  sourceVideo.play();
+  drawLoopActive = true;
+  drawLoop();
+
+  document.getElementById('recordBtn').style.display = 'none';
+  document.getElementById('stopBtn').style.display = 'block';
+  document.getElementById('recordStatus').textContent = 'Recording in progress — plays through your full clip...';
+
+  // Auto-stop when video ends
+  sourceVideo.onended = ()=>{
+    if(mediaRecorder && mediaRecorder.state === 'recording'){
+      stopRecording();
+    }
+  };
+});
+
+function stopRecording(){
+  if(mediaRecorder && mediaRecorder.state === 'recording'){
+    mediaRecorder.stop();
+  }
+  drawLoopActive = false;
+  document.getElementById('recordBtn').style.display = 'block';
+  document.getElementById('stopBtn').style.display = 'none';
+  playPauseBtn.textContent = '▶ Play Preview';
+}
+
+document.getElementById('stopBtn').addEventListener('click', stopRecording);
+</script>
+
+</body>
+</html>
